@@ -276,9 +276,6 @@
     function finishTimer() {
       clearInterval(timer);
       isRunning = false;
-
-      playBeep(880, 0.1);
-
       let countdown = 3;
       const nextMode = (mode === 'focus') ? 'break' : 'focus';
       statusLabel.textContent = `SWITCHING TO ${nextMode.toUpperCase()}...`;
@@ -303,12 +300,14 @@
         timeLeft = breakInput.value * 60;
         body.classList.add('break-mode'); // เปลี่ยนเป็นจอดำ
         statusLabel.textContent = "BREAK MODE";
-        playBeep(600, 0.5);
+        // playBeep(600, 0.5);
+        speak("Break time");
       } else {
         timeLeft = focusInput.value * 60;
         body.classList.remove('break-mode'); // เปลี่ยนเป็นจอขาว
         statusLabel.textContent = "FOCUS MODE";
         playTripleAlert();
+        speak("Focus time");
       }
       updateDisplay();
       startRunning();
@@ -340,6 +339,37 @@
         updateDisplay();
       }
     }
+    let softVoice = null;
+    function loadVoices() {
+      const voices = speechSynthesis.getVoices();
+
+      softVoice = voices.find(v =>
+        v.lang === 'en-US' &&
+        (
+          v.name.includes('Google US English Female') ||
+          v.name.includes('Samantha') ||
+          v.name.toLowerCase().includes('female')
+        )
+      );
+    }
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    function speak(text) {
+      speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.75;
+      utterance.pitch = 0.7;
+      utterance.volume = 0.7;
+
+      if (softVoice) {
+        utterance.voice = softVoice;
+      }
+
+      speechSynthesis.speak(utterance);
+    }
+
 
     focusInput.addEventListener('change', () => validateInput(focusInput));
     breakInput.addEventListener('change', () => validateInput(breakInput));
